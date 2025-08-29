@@ -4,18 +4,19 @@ import { getProducts } from '../api/products'
 import ProductModal from '../components/ProductModal.jsx'
 import useCart from '../store/cart'
 import '../styles/pages/collections.css'
-import '../styles/pages/products.css'
 
-function formatPrice(n) {
-    if (n == null) return '--'
-    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
-}
-
+/* Mostrar 3x3 = 9 por página */
+const PER_PAGE = 9
 const PRICE_RANGES = [
     { id: 'r1', label: '50k - 100k', min: 50000, max: 100000 },
     { id: 'r2', label: '100k - 500k', min: 100000, max: 500000 },
     { id: 'r3', label: '500k - 1M', min: 500000, max: 1000000 },
 ]
+
+function formatPrice(n) {
+    if (n == null) return '--'
+    return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
+}
 
 export default function Colecciones() {
     const { addItem } = useCart()
@@ -23,14 +24,17 @@ export default function Colecciones() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
 
+    // filtros UI
     const [query, setQuery] = useState('')
     const [selectedCats, setSelectedCats] = useState(new Set())
     const [selectedMaterials, setSelectedMaterials] = useState(new Set())
     const [selectedPrices, setSelectedPrices] = useState(new Set())
 
+    // paginación
     const [page, setPage] = useState(1)
-    const [per, setPer] = useState(12)
+    const [showAll, setShowAll] = useState(false)
 
+    // modal
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [modalOpen, setModalOpen] = useState(false)
 
@@ -43,7 +47,6 @@ export default function Colecciones() {
                 const products = await getProducts()
                 if (!mounted) return
                 setAllProducts(Array.isArray(products) ? products : [])
-                console.debug('[Colecciones] fetched products', products?.length)
             } catch (err) {
                 console.error('[Colecciones] getProducts error', err)
                 setError(err.message || 'No fue posible cargar productos')
@@ -55,6 +58,7 @@ export default function Colecciones() {
         return () => { mounted = false }
     }, [])
 
+    // derive categories & materials
     const categories = useMemo(() => Array.from(new Set(allProducts.map(p => p.category).filter(Boolean))), [allProducts])
     const materials = useMemo(() => Array.from(new Set(allProducts.map(p => p.material).filter(Boolean))), [allProducts])
 
@@ -98,8 +102,14 @@ export default function Colecciones() {
     }, [allProducts, query, selectedCats, selectedMaterials, selectedPrices])
 
     const total = filtered.length
-    const totalPages = Math.max(1, Math.ceil(total / per))
-    const displayed = useMemo(() => filtered.slice(0, page * per), [filtered, page, per])
+    const totalPages = Math.max(1, Math.ceil(total / PER_PAGE))
+
+    // displayed depende de showAll o page
+    const displayed = useMemo(() => {
+        if (showAll) return filtered.slice()
+        const from = (page - 1) * PER_PAGE
+        return filtered.slice(from, from + PER_PAGE)
+    }, [filtered, page, showAll])
 
     function clearFilters() {
         setQuery('')
@@ -107,6 +117,7 @@ export default function Colecciones() {
         setSelectedMaterials(new Set())
         setSelectedPrices(new Set())
         setPage(1)
+        setShowAll(false)
     }
 
     function openModal(p) {
@@ -126,7 +137,6 @@ export default function Colecciones() {
                 return
             }
             addItem({ id: product._id ?? product.id, name: product.name, meta: product.meta, price: product.price })
-            console.debug('[Colecciones] addItem', product._id ?? product.id)
             setTimeout(() => alert(`${product.name} agregado a tu lista`), 80)
         } catch (err) {
             console.error('[Colecciones] addItem error', err)
@@ -134,17 +144,26 @@ export default function Colecciones() {
         }
     }
 
-    function loadMore() {
-        setPage(prev => Math.min(prev + 1, totalPages))
-    }
-
     function goToPage(n) {
         if (n < 1) n = 1
         if (n > totalPages) n = totalPages
         setPage(n)
+        setShowAll(false)
         const el = document.querySelector('.results')
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
+
+    function toggleShowAll() {
+        setShowAll(prev => {
+            const next = !prev
+            if (next) setPage(1)
+            return next
+        })
+    }
+
+    // Determinar si debemos mostrar el texto "No hay más resultados":
+    // cuando lo que se muestra (displayed) equivale a la totalidad de filtered (es decir, no hay "más" por mostrar)
+    const isShowingAllAvailable = displayed.length > 0 && displayed.length === filtered.length
 
     return (
         <section className="collections-page">
@@ -160,7 +179,7 @@ export default function Colecciones() {
                             <input
                                 placeholder="Buscar dentro de colecciones..."
                                 value={query}
-                                onChange={e => { setQuery(e.target.value); setPage(1) }}
+                                onChange={e => { setQuery(e.target.value); setPage(1); setShowAll(false) }}
                                 aria-label="Buscar en colecciones"
                             />
                         </label>
@@ -219,12 +238,7 @@ export default function Colecciones() {
                         </div>
 
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                            <label className="sort-label muted">Mostrar:</label>
-                            <select value={per} onChange={(e) => { setPer(Number(e.target.value)); setPage(1) }}>
-                                <option value={6}>6 por página</option>
-                                <option value={12}>12 por página</option>
-                                <option value={24}>24 por página</option>
-                            </select>
+                            <div className="muted">Vista: 3 × 3</div>
                         </div>
                     </div>
 
@@ -243,7 +257,6 @@ export default function Colecciones() {
                                 >
                                     <div className="product-img" aria-hidden="true" style={{ backgroundImage: p.images && p.images[0] ? `url(${p.images[0]})` : undefined }} />
 
-                                    {/* badge de stock */}
                                     <div className="product-stock-badge">
                                         {outOfStock ? <span className="out-of-stock">Out Of Stock</span> : <span>Stock: {p.stock}</span>}
                                     </div>
@@ -274,20 +287,32 @@ export default function Colecciones() {
                         })}
                     </div>
 
-                    <div className="pagination">
+                    {/* PAGINACIÓN SIMPLE: Prev / Página X de Y / Next  + Mostrar todo */}
+                    <div className="pagination" style={{ marginTop: 18 }}>
                         <div className="pagination-left">
-                            <button className="icon-btn small" onClick={() => goToPage(page - 1)} disabled={page <= 1}>Prev</button>
-                            <span className="muted">Página {Math.min(page, totalPages)} de {totalPages}</span>
-                            <button className="icon-btn small" onClick={() => goToPage(page + 1)} disabled={page >= totalPages}>Next</button>
+                            <button className="icon-btn small" onClick={() => goToPage(page - 1)} disabled={showAll || page <= 1}>Prev</button>
+                        </div>
+
+                        <div className="pagination-center" aria-label="Paginación">
+                            {showAll ? (
+                                <div className="muted">Mostrando todos los resultados ({total})</div>
+                            ) : (
+                                <div className="muted">Página {page} de {totalPages}</div>
+                            )}
                         </div>
 
                         <div className="pagination-right">
-                            {page * per < total ? (
-                                <button className="icon-btn" onClick={loadMore}>Cargar más</button>
-                            ) : (
-                                <span className="muted">No hay más resultados</span>
-                            )}
+                            <button className="icon-btn small" onClick={() => goToPage(page + 1)} disabled={showAll || page >= totalPages}>Next</button>
+                            <button className="icon-btn small" onClick={toggleShowAll} style={{ marginLeft: 8 }}>
+                                {showAll ? 'Mostrar paginado' : 'Mostrar todo'}
+                            </button>
                         </div>
+                    </div>
+
+                    {/* Texto "No hay más resultados" al final de las tarjetas si ya estás mostrando todo lo disponible */}
+                    <div style={{ marginTop: 12, textAlign: 'center' }}>
+                        {(!loading && displayed.length === 0) && <div className="muted">No hay resultados</div>}
+                        {(!loading && isShowingAllAvailable) && <div className="no-more-text">No hay más resultados</div>}
                     </div>
                 </main>
             </div>

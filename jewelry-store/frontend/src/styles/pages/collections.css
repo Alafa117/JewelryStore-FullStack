@@ -1,6 +1,5 @@
-/* frontend/src/styles/pages/collections.css
-   Layout de Colecciones: sidebar izquierdo + contenido principal a la derecha
-   - Asegúrate de pegar/guardar este archivo y recargar el frontend.
+/* collections.css — Sidebar izquierdo + grid 3x3 (9 items/página)
+   Usa variables globales (base.css): --bg, --surface, --ink, --muted, --silver, --radius
 */
 
 .collections-page {
@@ -24,7 +23,6 @@
 .filters {
     padding: 14px;
     position: relative;
-    /* importante: no fixed/absolute */
     background: var(--surface);
     border-radius: 12px;
     border: 1px solid rgba(11, 11, 11, 0.04);
@@ -93,7 +91,7 @@
 .results {
     padding: 8px;
     min-width: 0;
-    /* evita overflow en flex/grid */
+    /* evita overflow en grid */
 }
 
 /* Cabecera de resultados */
@@ -109,14 +107,16 @@
     font-size: 0.95rem;
 }
 
-/* Grid de productos (asegúrate que coincide con tus estilos .product-card) */
+/* PRODUCTS GRID: 3 columnas en escritorio (exacto) */
 .products-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(3, 1fr);
+    /* 3 columnas fijas */
     gap: 16px;
+    align-items: start;
 }
 
-/* Tarjeta de producto: mantén position relative para badges */
+/* Tarjeta de producto */
 .product-card {
     position: relative;
     background: #fff;
@@ -128,6 +128,8 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
+    min-height: 280px;
+    /* altura uniforme para alinear filas */
 }
 
 /* Imagen / placeholder */
@@ -140,7 +142,7 @@
     border: 1px solid rgba(11, 11, 11, 0.04);
 }
 
-/* Stock badge */
+/* Badge de stock (top-left) */
 .product-stock-badge {
     position: absolute;
     top: 10px;
@@ -155,6 +157,7 @@
     box-shadow: 0 6px 18px rgba(11, 11, 11, 0.03);
 }
 
+/* Apariencia cuando está fuera de stock */
 .product-card.oos .product-img {
     filter: grayscale(70%) contrast(0.9) brightness(0.9);
     opacity: 0.9;
@@ -166,7 +169,19 @@
     letter-spacing: 0.3px;
 }
 
-/* Actions */
+/* Títulos y meta en tarjeta */
+.product-title {
+    font-weight: 700;
+    color: var(--ink);
+}
+
+.product-meta {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-top: 6px;
+}
+
+/* Acciones (botones) */
 .product-actions {
     display: flex;
     gap: 8px;
@@ -175,14 +190,14 @@
     margin-top: 12px;
 }
 
-/* Disabled look para botones */
+/* Botones deshabilitados estilo */
 .product-actions button[disabled],
 .product-actions button[aria-disabled="true"] {
     opacity: 0.45;
     pointer-events: none;
 }
 
-/* Pagination container */
+/* Pagination container (alineado simple) */
 .pagination {
     display: flex;
     justify-content: space-between;
@@ -199,47 +214,99 @@
     align-items: center;
 }
 
+.pagination-center {
+    text-align: center;
+    flex: 1;
+    color: var(--muted);
+}
+
 .pagination-right {
     display: flex;
     gap: 8px;
     align-items: center;
 }
 
-/* Tamaños de botones pequeños */
+/* estilo para botones pequeños */
 .icon-btn.small {
     padding: 6px 8px;
     font-size: 0.92rem;
     border-radius: 8px;
 }
 
-/* Responsive: apilar para pantallas pequeñas */
-@media (max-width: 880px) {
+/* Texto “No hay más resultados” */
+.no-more-text {
+    color: var(--muted);
+    font-weight: 600;
+    padding: 10px 0;
+}
+
+/* Mensaje cuando no hay resultados */
+.products-grid:empty+.no-more-text,
+.results .muted {}
+
+/* Active look para botones (si lo necesitas) */
+.icon-btn.small.active-page {
+    border-color: rgba(11, 11, 11, 0.12);
+    box-shadow: 0 6px 18px rgba(11, 11, 11, 0.04);
+}
+
+/* Responsive: 2 columnas en pantallas medias, 1 en móviles */
+@media (max-width: 980px) {
+    .collections-grid {
+        grid-template-columns: 220px 1fr;
+    }
+
+    .products-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .product-card {
+        min-height: 260px;
+    }
+}
+
+@media (max-width: 640px) {
     .collections-grid {
         grid-template-columns: 1fr;
-        /* apilar aside + main */
     }
 
     .filters {
         order: 2;
-        width: 100%;
+        margin-top: 12px;
     }
 
-    /* filtros debajo en mobile */
     .results {
         order: 1;
     }
 
-    .product-img {
-        height: 120px;
+    .products-grid {
+        grid-template-columns: 1fr;
     }
 
-    .filters {
-        margin-top: 12px;
+    .product-card {
+        min-height: auto;
     }
 }
 
-/* Small polishing */
+/* Pequeños pulidos */
 .form-error {
     margin-bottom: 12px;
     color: #b22;
+}
+
+/* Utility: asegúrate que aside no se superponga en mobile */
+.filters {
+    z-index: 1;
+}
+
+/* Si usas el texto "Mostrando todos..." centra correctamente */
+.pagination-center .muted {
+    display: inline-block;
+}
+
+/* Asegurar que las tarjetas no se rompan visualmente en impresión/resizing */
+.product-card,
+.product-img {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
