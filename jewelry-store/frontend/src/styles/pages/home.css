@@ -1,0 +1,72 @@
+/* home.css */
+.home {
+    max-width: 1100px;
+    margin: 28px auto;
+    padding: 0 16px;
+    color: var(--ink);
+}
+
+.hero {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: center;
+    padding: 28px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent);
+    border-radius: 14px;
+    border: 1px solid rgba(11, 11, 11, 0.04);
+}
+
+.hero-title {
+    font-size: 1.8rem;
+    margin: 0 0 8px 0;
+    color: var(--ink);
+    letter-spacing: 0.3px;
+}
+
+.hero-sub {
+    margin: 0;
+    color: var(--muted);
+}
+
+.hero-cta .btn {
+    background: linear-gradient(90deg, var(--silver), rgba(191, 191, 191, 0.9));
+    color: #07100a;
+    padding: 10px 14px;
+    border-radius: 12px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 10px 30px rgba(11, 11, 11, 0.04);
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+    margin-top: 18px;
+}
+
+.card {
+    padding: 18px;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98));
+    border: 1px solid rgba(11, 11, 11, 0.04);
+    transition: transform .12s ease, box-shadow .12s ease;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.06);
+}
+
+.card-title {
+    font-weight: 700;
+    margin-bottom: 6px;
+    color: var(--silver)
+}
+
+.card-desc {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-top: 6px;
+}

@@ -1,0 +1,132 @@
+/* navbar.css — navbar blanca y minimalista con acento plata */
+.nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg);
+    border-bottom: 1px solid rgba(11, 11, 11, 0.06);
+    position: sticky;
+    top: 0;
+    z-index: 40;
+}
+
+.nav-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.brand-text {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--ink);
+    letter-spacing: 0.3px;
+}
+
+.brand-text:hover {
+    color: var(--silver);
+    transform: translateY(-2px);
+    transition: .12s ease;
+}
+
+.nav-right {
+    display: flex;
+    gap: 10px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    align-items: center;
+}
+
+/* buttons in navbar */
+.icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid rgba(11, 11, 11, 0.04);
+    color: var(--ink);
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.icon-btn:hover {
+    border-color: rgba(11, 11, 11, 0.08);
+    color: var(--silver);
+}
+
+/* search input container - hidden by default, positioned relative to navbar */
+.search-container {
+    position: relative;
+}
+
+.search-input {
+    min-width: 240px;
+    max-width: 340px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(11, 11, 11, 0.06);
+    outline: none;
+    background: #fff;
+    color: var(--ink);
+    box-shadow: 0 6px 18px rgba(11, 11, 11, 0.03);
+}
+
+.search-input::placeholder {
+    color: var(--muted);
+}
+
+/* profile & cart dropdowns */
+.dropdown {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 10px);
+    min-width: 220px;
+    background: #fff;
+    border: 1px solid rgba(11, 11, 11, 0.06);
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(11, 11, 11, 0.06);
+    z-index: 120;
+    padding: 10px;
+    color: var(--ink);
+}
+
+.dropdown .muted {
+    color: var(--muted);
+    font-size: 0.92rem;
+    margin-bottom: 8px;
+}
+
+.dropdown button {
+    width: 100%;
+    margin-top: 8px;
+}
+
+/* small badge for cart count */
+.badge {
+    background: var(--silver);
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 12px;
+    padding: 4px 7px;
+    border-radius: 999px;
+    margin-left: 6px;
+    box-shadow: 0 6px 12px rgba(11, 11, 11, 0.04);
+}
+
+/* responsive */
+@media (max-width:640px) {
+    .search-input {
+        min-width: 140px;
+        max-width: 180px;
+    }
+
+    .brand-text {
+        font-size: 1rem;
+    }
+}

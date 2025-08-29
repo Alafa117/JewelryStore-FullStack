@@ -1,0 +1,15 @@
+/* debug.css */
+.debug {
+    margin: 18px 0;
+    background: #f7f7f7;
+    border: 1px solid rgba(11, 11, 11, 0.04);
+    padding: 10px;
+    border-radius: 10px;
+    color: var(--muted);
+}
+
+.debug-pre {
+    white-space: pre-wrap;
+    font-size: 13px;
+    color: var(--muted);
+}

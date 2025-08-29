@@ -1,0 +1,10 @@
+/* profile.css */
+.dropdown .muted {
+    color: var(--muted);
+}
+
+.dropdown button.icon-btn {
+    background: var(--accent);
+    color: #000;
+    border: none;
+}

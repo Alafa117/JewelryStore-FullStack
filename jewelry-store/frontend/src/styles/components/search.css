@@ -1,0 +1,11 @@
+/* search.css */
+.search-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+}
+
+.search-input {
+    transition: width .12s ease;
+}
