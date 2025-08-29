@@ -1,4 +1,4 @@
-// middleware/authMiddleware.js
+// backend/middleware/authMiddleware.js
 const jwt = require('jsonwebtoken')
 const User = require('../models/User')
 
@@ -10,11 +10,22 @@ module.exports = async function authMiddleware(req, res, next) {
         }
         const token = authHeader.split(' ')[1]
         const secret = process.env.JWT_SECRET || 'dev-secret'
-        const decoded = jwt.verify(token, secret)
-        // attach user basic info to request (no password)
+
+        let decoded
+        try {
+            decoded = jwt.verify(token, secret)
+        } catch (err) {
+            console.error('[authMiddleware] token verify failed', err?.message)
+            return res.status(401).json({ message: 'Token inválido o expirado' })
+        }
+
+        // attach minimal info
         req.user = { id: decoded.id, email: decoded.email, role: decoded.role }
-        // si quieres recuperar desde DB (opcional):
-        // req.userDoc = await User.findById(decoded.id).select('-password')
+
+        // opcional: puedes también recuperar el user doc (sin password)
+        // const userDoc = await User.findById(decoded.id).select('-password')
+        // req.userDoc = userDoc
+
         next()
     } catch (err) {
         console.error('[authMiddleware] error', err)

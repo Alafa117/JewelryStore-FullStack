@@ -6,10 +6,13 @@ import Navbar from './components/Navbar.jsx'
 import Home from './pages/Home.jsx'
 import Login from './pages/Login.jsx'
 import SignUp from './pages/SignUp.jsx'
-import Colecciones from './pages/Colecciones.jsx'   // nueva página
 import Anillos from './pages/Anillos.jsx'
 import Collares from './pages/Collares.jsx'
 import Pendientes from './pages/Pendientes.jsx'
+import Colecciones from './pages/Colecciones.jsx'
+import Seller from './pages/Seller.jsx'
+
+import RoleProtected from './components/RoleProtected.jsx'
 import ProtectedRoute from './components/ProtectedRoute.jsx'
 import DebugPanel from './components/DebugPanel.jsx'
 
@@ -24,9 +27,11 @@ export default function App() {
           <Route path="/anillos" element={<Anillos />} />
           <Route path="/collares" element={<Collares />} />
           <Route path="/pendientes" element={<Pendientes />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
 
+          {/* Rutas protegidas */}
           <Route
             path="/dashboard"
             element={
@@ -38,6 +43,18 @@ export default function App() {
               </ProtectedRoute>
             }
           />
+
+          {/* PANEL VENDEDOR - solo Seller o Admin */}
+          <Route
+            path="/seller"
+            element={
+              <RoleProtected roles={['Seller', 'Admin']}>
+                <Seller />
+              </RoleProtected>
+            }
+          />
+
+          {/* fallback - puedes añadir una página 404 si quieres */}
         </Routes>
 
         {import.meta.env.DEV && <DebugPanel />}
