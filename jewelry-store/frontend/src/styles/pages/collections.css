@@ -1,4 +1,8 @@
-/* src/styles/pages/collections.css */
+/* frontend/src/styles/pages/collections.css
+   Layout de Colecciones: sidebar izquierdo + contenido principal a la derecha
+   - Asegúrate de pegar/guardar este archivo y recargar el frontend.
+*/
+
 .collections-page {
     max-width: 1200px;
     margin: 22px auto;
@@ -6,16 +10,25 @@
     color: var(--ink);
 }
 
+/* Grid principal: aside (filtros) + main (resultados) */
 .collections-grid {
     display: grid;
     grid-template-columns: 280px 1fr;
+    /* sidebar fijo a la izquierda */
     gap: 20px;
     align-items: start;
+    align-content: start;
 }
 
-/* filtros (aside) */
+/* ASIDE - filtros */
 .filters {
     padding: 14px;
+    position: relative;
+    /* importante: no fixed/absolute */
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid rgba(11, 11, 11, 0.04);
+    box-shadow: 0 8px 20px rgba(11, 11, 11, 0.03);
 }
 
 .filters-header {
@@ -25,6 +38,18 @@
     margin-bottom: 12px;
 }
 
+.filters-header h3 {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--ink);
+}
+
+.filters-header .icon-btn.small {
+    padding: 6px 8px;
+    font-size: 0.9rem;
+}
+
+/* Search inside filters */
 .filter-block {
     margin-bottom: 12px;
 }
@@ -34,10 +59,20 @@
     padding: 10px;
     border-radius: 10px;
     border: 1px solid rgba(11, 11, 11, 0.06);
+    background: transparent;
+    color: var(--ink);
+    outline: none;
 }
 
+/* Cada sección de filtro */
 .filter-section {
     margin-bottom: 12px;
+}
+
+.filter-section h4 {
+    margin: 8px 0;
+    font-size: 0.95rem;
+    color: var(--ink);
 }
 
 .filter-item-real {
@@ -54,11 +89,14 @@
     height: 16px;
 }
 
-/* results area */
+/* MAIN - resultados */
 .results {
     padding: 8px;
+    min-width: 0;
+    /* evita overflow en flex/grid */
 }
 
+/* Cabecera de resultados */
 .results-header {
     display: flex;
     justify-content: space-between;
@@ -71,9 +109,80 @@
     font-size: 0.95rem;
 }
 
-/* product grid uses .products-grid from products.css */
+/* Grid de productos (asegúrate que coincide con tus estilos .product-card) */
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
 
-/* pagination */
+/* Tarjeta de producto: mantén position relative para badges */
+.product-card {
+    position: relative;
+    background: #fff;
+    border-radius: 12px;
+    padding: 12px;
+    border: 1px solid rgba(11, 11, 11, 0.04);
+    box-shadow: 0 8px 20px rgba(11, 11, 11, 0.03);
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+/* Imagen / placeholder */
+.product-img {
+    height: 140px;
+    border-radius: 10px;
+    background-color: #f7f7f7;
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(11, 11, 11, 0.04);
+}
+
+/* Stock badge */
+.product-stock-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--ink);
+    padding: 6px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    border: 1px solid rgba(11, 11, 11, 0.06);
+    box-shadow: 0 6px 18px rgba(11, 11, 11, 0.03);
+}
+
+.product-card.oos .product-img {
+    filter: grayscale(70%) contrast(0.9) brightness(0.9);
+    opacity: 0.9;
+}
+
+.product-card .out-of-stock {
+    color: #b22;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+/* Actions */
+.product-actions {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 12px;
+}
+
+/* Disabled look para botones */
+.product-actions button[disabled],
+.product-actions button[aria-disabled="true"] {
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+/* Pagination container */
 .pagination {
     display: flex;
     justify-content: space-between;
@@ -96,32 +205,41 @@
     align-items: center;
 }
 
-/* small adjustments */
+/* Tamaños de botones pequeños */
 .icon-btn.small {
     padding: 6px 8px;
     font-size: 0.92rem;
     border-radius: 8px;
 }
 
-/* responsive: move filters below results for small screens (mobile-first usability) */
+/* Responsive: apilar para pantallas pequeñas */
 @media (max-width: 880px) {
     .collections-grid {
         grid-template-columns: 1fr;
+        /* apilar aside + main */
     }
 
     .filters {
         order: 2;
+        width: 100%;
     }
 
+    /* filtros debajo en mobile */
     .results {
         order: 1;
     }
 
-    .filters {
-        width: 100%;
+    .product-img {
+        height: 120px;
     }
 
-    .products-grid {
-        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    .filters {
+        margin-top: 12px;
     }
+}
+
+/* Small polishing */
+.form-error {
+    margin-bottom: 12px;
+    color: #b22;
 }

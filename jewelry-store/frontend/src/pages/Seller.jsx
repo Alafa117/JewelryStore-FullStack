@@ -4,12 +4,20 @@ import useAuth from '../store/auth'
 import { createProduct } from '../api/products'
 import '../styles/components/forms.css'
 
+/**
+ * Seller panel: formulario para crear producto
+ * - Categoría: select con Anillos/Collares/Pendientes
+ * - Material: select con Bronce/Plata/Oro
+ */
+const CATEGORY_OPTIONS = ['Anillos', 'Collares', 'Pendientes']
+const MATERIAL_OPTIONS = ['Bronce', 'Plata', 'Oro']
+
 export default function Seller() {
     const { token, user } = useAuth()
     const [form, setForm] = useState({
         name: '',
-        category: '',
-        material: '',
+        category: CATEGORY_OPTIONS[0],
+        material: MATERIAL_OPTIONS[1], // Plata por defecto
         price: '',
         description: '',
         stock: 1
@@ -28,7 +36,7 @@ export default function Seller() {
         setError(null)
         setSuccessMsg(null)
 
-        // validación simple en frontend
+        // validación simple
         if (!form.name.trim() || !form.category.trim() || !form.price) {
             setError('Por favor completa: nombre, categoría y precio.')
             return
@@ -45,11 +53,11 @@ export default function Seller() {
 
         setLoading(true)
         try {
+            console.debug('[Seller] creating product', { payload, seller: user?.email })
             const res = await createProduct(payload, token)
+            console.debug('[Seller] createProduct response', res)
             setSuccessMsg('Producto creado correctamente.')
-            console.debug('[Seller] created product', res.product)
-            // limpiar
-            setForm({ name: '', category: '', material: '', price: '', description: '', stock: 1 })
+            setForm({ name: '', category: CATEGORY_OPTIONS[0], material: MATERIAL_OPTIONS[1], price: '', description: '', stock: 1 })
         } catch (err) {
             console.error('[Seller] create error', err)
             setError(err?.message || 'No se pudo crear el producto.')
@@ -74,15 +82,21 @@ export default function Seller() {
                     <input name="name" value={form.name} onChange={onChange} required />
                 </label>
 
-                <label className="form-field">
-                    <span>Categoría</span>
-                    <input name="category" value={form.category} onChange={onChange} placeholder="Anillos / Collares / Pendientes" required />
-                </label>
+                <div className="two-col">
+                    <label className="form-field">
+                        <span>Categoría</span>
+                        <select name="category" value={form.category} onChange={onChange} required>
+                            {CATEGORY_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                    </label>
 
-                <label className="form-field">
-                    <span>Material</span>
-                    <input name="material" value={form.material} onChange={onChange} placeholder="Plata, Oro, Bronce..." />
-                </label>
+                    <label className="form-field">
+                        <span>Material</span>
+                        <select name="material" value={form.material} onChange={onChange}>
+                            {MATERIAL_OPTIONS.map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                        </select>
+                    </label>
+                </div>
 
                 <div className="two-col">
                     <label className="form-field">
@@ -92,7 +106,7 @@ export default function Seller() {
 
                     <label className="form-field">
                         <span>Stock</span>
-                        <input name="stock" value={form.stock} onChange={onChange} />
+                        <input name="stock" type="number" min="0" value={form.stock} onChange={onChange} />
                     </label>
                 </div>
 

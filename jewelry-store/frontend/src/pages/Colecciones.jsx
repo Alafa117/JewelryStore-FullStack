@@ -1,14 +1,13 @@
 // src/pages/Colecciones.jsx
-import React, { useMemo, useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
-import PRODUCTS from '../data/products'
+import React, { useEffect, useMemo, useState } from 'react'
+import { getProducts } from '../api/products'
 import ProductModal from '../components/ProductModal.jsx'
 import useCart from '../store/cart'
-import '../styles/pages/products.css'
 import '../styles/pages/collections.css'
+import '../styles/pages/products.css'
 
-/* Helpers */
 function formatPrice(n) {
+    if (n == null) return '--'
     return n.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".")
 }
 
@@ -20,46 +19,59 @@ const PRICE_RANGES = [
 
 export default function Colecciones() {
     const { addItem } = useCart()
-    const [searchParams, setSearchParams] = useSearchParams()
+    const [allProducts, setAllProducts] = useState([])
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState(null)
 
-    // Read initial values from URL
-    const paramQ = searchParams.get('q') || ''
-    const paramCats = (searchParams.get('cats') || '').split(',').filter(Boolean)
-    const paramMats = (searchParams.get('mats') || '').split(',').filter(Boolean)
-    const paramPrices = (searchParams.get('prices') || '').split(',').filter(Boolean)
-    const paramPage = parseInt(searchParams.get('page') || '1', 10) || 1
-    const paramPer = parseInt(searchParams.get('per') || '6', 10) || 6
+    const [query, setQuery] = useState('')
+    const [selectedCats, setSelectedCats] = useState(new Set())
+    const [selectedMaterials, setSelectedMaterials] = useState(new Set())
+    const [selectedPrices, setSelectedPrices] = useState(new Set())
 
-    const [query, setQuery] = useState(paramQ)
-    const [selectedCats, setSelectedCats] = useState(new Set(paramCats))
-    const [selectedMaterials, setSelectedMaterials] = useState(new Set(paramMats))
-    const [selectedPrices, setSelectedPrices] = useState(new Set(paramPrices))
-    const [page, setPage] = useState(paramPage)         // page used for pagination / lazy load
-    const [per, setPer] = useState(paramPer)            // items per page / batch
+    const [page, setPage] = useState(1)
+    const [per, setPer] = useState(12)
+
     const [selectedProduct, setSelectedProduct] = useState(null)
     const [modalOpen, setModalOpen] = useState(false)
 
-    // Derived lists
-    const categories = useMemo(() => Array.from(new Set(PRODUCTS.map(p => p.category))), [])
-    const materials = useMemo(() => Array.from(new Set(PRODUCTS.map(p => p.material))), [])
+    useEffect(() => {
+        let mounted = true
+        async function load() {
+            setLoading(true)
+            setError(null)
+            try {
+                const products = await getProducts()
+                if (!mounted) return
+                setAllProducts(Array.isArray(products) ? products : [])
+                console.debug('[Colecciones] fetched products', products?.length)
+            } catch (err) {
+                console.error('[Colecciones] getProducts error', err)
+                setError(err.message || 'No fue posible cargar productos')
+            } finally {
+                if (mounted) setLoading(false)
+            }
+        }
+        load()
+        return () => { mounted = false }
+    }, [])
 
-    // toggle helper for sets
-    const toggleSet = useCallback((setter, value) => {
+    const categories = useMemo(() => Array.from(new Set(allProducts.map(p => p.category).filter(Boolean))), [allProducts])
+    const materials = useMemo(() => Array.from(new Set(allProducts.map(p => p.material).filter(Boolean))), [allProducts])
+
+    function toggleSet(setter, value) {
         setter(prev => {
             const s = new Set(prev)
             if (s.has(value)) s.delete(value)
             else s.add(value)
-            // reset page to 1 whenever filters change
             setPage(1)
             return s
         })
-    }, [])
+    }
 
-    // Filtering logic
     function matchesFilters(p) {
         const q = (query || '').trim().toLowerCase()
         if (q) {
-            const inText = (p.name + ' ' + p.meta + ' ' + p.description + ' ' + p.category).toLowerCase()
+            const inText = `${p.name || ''} ${p.meta || ''} ${p.description || ''} ${p.category || ''}`.toLowerCase()
             if (!inText.includes(q)) return false
         }
         if (selectedCats.size > 0 && !selectedCats.has(p.category)) return false
@@ -69,70 +81,25 @@ export default function Colecciones() {
             for (const rId of selectedPrices) {
                 const rng = PRICE_RANGES.find(r => r.id === rId)
                 if (!rng) continue
-                if (p.price >= rng.min && p.price <= rng.max) { ok = true; break }
+                if ((p.price || 0) >= rng.min && (p.price || 0) <= rng.max) { ok = true; break }
             }
             if (!ok) return false
         }
         return true
     }
 
-    // filtered list (unpaginated)
     const filtered = useMemo(() => {
         try {
-            return PRODUCTS.filter(matchesFilters)
+            return allProducts.filter(matchesFilters)
         } catch (err) {
             console.error('[Colecciones] filter error', err)
             return []
         }
-    }, [query, selectedCats, selectedMaterials, selectedPrices])
+    }, [allProducts, query, selectedCats, selectedMaterials, selectedPrices])
 
-    // Pagination / Lazy-load: we show items up to page * per
     const total = filtered.length
     const totalPages = Math.max(1, Math.ceil(total / per))
-    // displayed items: cumulative up to page * per (lazy load behavior)
     const displayed = useMemo(() => filtered.slice(0, page * per), [filtered, page, per])
-
-    // Sync state -> URL params (replace to avoid polluting history)
-    useEffect(() => {
-        const params = {}
-        if (query) params.q = query
-        if (selectedCats.size > 0) params.cats = Array.from(selectedCats).join(',')
-        if (selectedMaterials.size > 0) params.mats = Array.from(selectedMaterials).join(',')
-        if (selectedPrices.size > 0) params.prices = Array.from(selectedPrices).join(',')
-        if (page && page > 1) params.page = String(page)
-        if (per && per !== 6) params.per = String(per) // default 6, only set if different
-        // setSearchParams expects an object or URLSearchParams
-        try {
-            setSearchParams(params, { replace: true })
-            console.debug('[Colecciones] URL params set', params)
-        } catch (err) {
-            console.error('[Colecciones] setSearchParams error', err)
-        }
-    }, [query, selectedCats, selectedMaterials, selectedPrices, page, per, setSearchParams])
-
-    // If URL changes externally (user pastes link), keep state in sync:
-    useEffect(() => {
-        // We listen for searchParams changes (react-router guarantees referential change)
-        const newQ = searchParams.get('q') || ''
-        const newCats = (searchParams.get('cats') || '').split(',').filter(Boolean)
-        const newMats = (searchParams.get('mats') || '').split(',').filter(Boolean)
-        const newPrices = (searchParams.get('prices') || '').split(',').filter(Boolean)
-        const newPage = parseInt(searchParams.get('page') || '1', 10) || 1
-        const newPer = parseInt(searchParams.get('per') || '6', 10) || 6
-
-        // Only update local state if differs (avoids infinite loop)
-        if (newQ !== query) setQuery(newQ)
-        // compare sets
-        const catsEqual = newCats.length === selectedCats.size && newCats.every(c => selectedCats.has(c))
-        if (!catsEqual) setSelectedCats(new Set(newCats))
-        const matsEqual = newMats.length === selectedMaterials.size && newMats.every(m => selectedMaterials.has(m))
-        if (!matsEqual) setSelectedMaterials(new Set(newMats))
-        const pricesEqual = newPrices.length === selectedPrices.size && newPrices.every(p => selectedPrices.has(p))
-        if (!pricesEqual) setSelectedPrices(new Set(newPrices))
-        if (newPage !== page) setPage(newPage)
-        if (newPer !== per) setPer(newPer)
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams])
 
     function clearFilters() {
         setQuery('')
@@ -140,11 +107,10 @@ export default function Colecciones() {
         setSelectedMaterials(new Set())
         setSelectedPrices(new Set())
         setPage(1)
-        setPer(6)
     }
 
-    function openModal(product) {
-        setSelectedProduct(product)
+    function openModal(p) {
+        setSelectedProduct(p)
         setModalOpen(true)
     }
     function closeModal() {
@@ -155,8 +121,12 @@ export default function Colecciones() {
     function handleAddToCart(ev, product) {
         ev.stopPropagation()
         try {
-            addItem({ id: product.id, name: product.name, meta: product.meta, price: product.price })
-            console.debug('[Colecciones] addItem', product.id)
+            if ((product.stock || 0) <= 0) {
+                alert('No hay stock disponible para este producto.')
+                return
+            }
+            addItem({ id: product._id ?? product.id, name: product.name, meta: product.meta, price: product.price })
+            console.debug('[Colecciones] addItem', product._id ?? product.id)
             setTimeout(() => alert(`${product.name} agregado a tu lista`), 80)
         } catch (err) {
             console.error('[Colecciones] addItem error', err)
@@ -165,7 +135,6 @@ export default function Colecciones() {
     }
 
     function loadMore() {
-        // increment page (lazy-load)
         setPage(prev => Math.min(prev + 1, totalPages))
     }
 
@@ -173,7 +142,6 @@ export default function Colecciones() {
         if (n < 1) n = 1
         if (n > totalPages) n = totalPages
         setPage(n)
-        // scroll to top of results for usability
         const el = document.querySelector('.results')
         if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
@@ -200,6 +168,7 @@ export default function Colecciones() {
 
                     <div className="filter-section">
                         <h4>Categorías</h4>
+                        {categories.length === 0 && <div className="muted">No hay categorías</div>}
                         {categories.map(cat => (
                             <label key={cat} className="filter-item-real">
                                 <input
@@ -228,6 +197,7 @@ export default function Colecciones() {
 
                     <div className="filter-section">
                         <h4>Material</h4>
+                        {materials.length === 0 && <div className="muted">No hay materiales</div>}
                         {materials.map(m => (
                             <label key={m} className="filter-item-real">
                                 <input
@@ -250,7 +220,7 @@ export default function Colecciones() {
 
                         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
                             <label className="sort-label muted">Mostrar:</label>
-                            <select value={per} onChange={(e) => { setPer(parseInt(e.target.value, 10)); setPage(1) }}>
+                            <select value={per} onChange={(e) => { setPer(Number(e.target.value)); setPage(1) }}>
                                 <option value={6}>6 por página</option>
                                 <option value={12}>12 por página</option>
                                 <option value={24}>24 por página</option>
@@ -258,36 +228,52 @@ export default function Colecciones() {
                         </div>
                     </div>
 
+                    {loading && <div className="muted">Cargando productos…</div>}
+                    {error && <div className="form-error">{error}</div>}
+
                     <div className="products-grid" role="list">
-                        {displayed.map(p => (
-                            <article
-                                className="product-card"
-                                key={p.id}
-                                role="listitem"
-                                onClick={(e) => { const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : ''; if (['button', 'svg', 'path', 'input', 'a'].includes(tag)) return; openModal(p) }}
-                            >
-                                <div className="product-img" aria-hidden="true" />
+                        {displayed.map(p => {
+                            const outOfStock = (p.stock || 0) <= 0
+                            return (
+                                <article
+                                    className={`product-card ${outOfStock ? 'oos' : ''}`}
+                                    key={p._id ?? p.id}
+                                    role="listitem"
+                                    onClick={(e) => { const tag = e.target && e.target.tagName ? e.target.tagName.toLowerCase() : ''; if (['button', 'svg', 'path', 'input', 'a'].includes(tag)) return; openModal(p) }}
+                                >
+                                    <div className="product-img" aria-hidden="true" style={{ backgroundImage: p.images && p.images[0] ? `url(${p.images[0]})` : undefined }} />
 
-                                <div style={{ marginTop: 10 }}>
-                                    <div className="product-title">{p.name}</div>
-                                    <div className="product-meta">{p.meta}</div>
-                                    <div style={{ fontWeight: 700 }}>₡{formatPrice(p.price)}</div>
-                                </div>
+                                    {/* badge de stock */}
+                                    <div className="product-stock-badge">
+                                        {outOfStock ? <span className="out-of-stock">Out Of Stock</span> : <span>Stock: {p.stock}</span>}
+                                    </div>
 
-                                <div className="product-actions" style={{ marginTop: 12 }}>
-                                    <button className="icon-btn small" onClick={(ev) => { ev.stopPropagation(); openModal(p) }}>
-                                        Ver
-                                    </button>
+                                    <div style={{ marginTop: 10 }}>
+                                        <div className="product-title">{p.name}</div>
+                                        <div className="product-meta">{p.meta || p.material || p.category}</div>
+                                        <div style={{ fontWeight: 700 }}>₡{formatPrice(p.price)}</div>
+                                    </div>
 
-                                    <button className="icon-btn small" onClick={(ev) => handleAddToCart(ev, p)}>
-                                        Agregar
-                                    </button>
-                                </div>
-                            </article>
-                        ))}
+                                    <div className="product-actions" style={{ marginTop: 12 }}>
+                                        <button className="icon-btn small" onClick={(ev) => { ev.stopPropagation(); openModal(p) }}>
+                                            Ver
+                                        </button>
+
+                                        <button
+                                            className="icon-btn small"
+                                            onClick={(ev) => handleAddToCart(ev, p)}
+                                            disabled={outOfStock}
+                                            aria-disabled={outOfStock}
+                                            title={outOfStock ? 'Sin stock' : 'Agregar'}
+                                        >
+                                            Agregar
+                                        </button>
+                                    </div>
+                                </article>
+                            )
+                        })}
                     </div>
 
-                    {/* Paginación / Lazy load controls */}
                     <div className="pagination">
                         <div className="pagination-left">
                             <button className="icon-btn small" onClick={() => goToPage(page - 1)} disabled={page <= 1}>Prev</button>
