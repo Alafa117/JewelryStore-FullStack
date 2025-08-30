@@ -1,30 +1,33 @@
 // backend/routes/products.js
 const express = require('express')
-const { body } = require('express-validator')
 const router = express.Router()
+const { body } = require('express-validator')
+
 const productController = require('../controllers/productController')
-const validateRequest = require('../middleware/validateRequest')
-const authMiddleware = require('../middleware/authMiddleware')
-const requireRole = require('../middleware/roleMiddleware')
+const { verifyToken, isOwnerOrAdmin } = require('../middleware/auth')
 
-// Validaciones simples para creación
-const createValidators = [
-    body('name').trim().notEmpty().withMessage('name required'),
-    body('category').trim().notEmpty().withMessage('category required'),
-    body('price').notEmpty().withMessage('price required').isNumeric().withMessage('price must be numeric'),
-    // images, description, stock optional
-]
+/* Public list - supports query ?sellerId=... */
+router.get('/', productController.listProducts)
 
-router.post(
-    '/',
-    authMiddleware,
-    requireRole('Seller', 'Admin'),
-    createValidators,
-    validateRequest,
+/* Protected: list my products */
+router.get('/mine', verifyToken, productController.listMyProducts)
+
+/* Create product (seller must be authenticated) */
+router.post('/',
+    verifyToken,
+    // validations optional
+    body('name').isLength({ min: 2 }).withMessage('El nombre es muy corto'),
+    body('price').isNumeric().withMessage('Precio inválido'),
     productController.createProduct
 )
 
-// GET list (público)
-router.get('/', productController.listProducts)
+/* For routes with :id we preload product so auth can check ownership */
+router.use('/:id', productController.loadProduct)
+
+/* Update (only owner or admin) */
+router.put('/:id', verifyToken, isOwnerOrAdmin, productController.updateProduct)
+
+/* Delete (only owner or admin) */
+router.delete('/:id', verifyToken, isOwnerOrAdmin, productController.deleteProduct)
 
 module.exports = router

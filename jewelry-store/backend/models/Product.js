@@ -2,13 +2,14 @@
 const mongoose = require('mongoose')
 
 const productSchema = new mongoose.Schema({
-    name: { type: String, required: true, trim: true, maxlength: 200 },
-    category: { type: String, required: true, trim: true }, // e.g. "Anillos"
-    material: { type: String, trim: true }, // e.g. "Plata", "Oro"
-    price: { type: Number, required: true, min: 0 },
-    description: { type: String, trim: true, default: '' },
-    images: [{ type: String }], // URLs (opcional)
-    stock: { type: Number, default: 1, min: 0 },
+    name: { type: String, required: true, trim: true },
+    description: { type: String, default: '' },
+    meta: { type: String, default: '' }, // texto extra si quieres
+    category: { type: String, enum: ['Anillos', 'Collares', 'Pendientes', 'Otros'], default: 'Otros' },
+    material: { type: String, enum: ['Bronce', 'Plata', 'Oro', 'Otro'], default: 'Plata' },
+    price: { type: Number, required: true, default: 0 },
+    stock: { type: Number, default: 0 },
+    images: [{ type: String }], // URLs
     seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
 }, { timestamps: true })
 

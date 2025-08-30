@@ -1,58 +1,73 @@
-// src/api/products.js
+// frontend/src/api/products.js
 import { logDebug, logError } from '../utils/logger'
-
 const BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000'
 
-/**
- * GET /api/products
- * Optional query: ?category=Anillos&material=Plata&q=texto
- */
-export async function getProducts(params = {}) {
+async function request(path, options = {}) {
     try {
-        const qs = new URLSearchParams()
-        Object.entries(params).forEach(([k, v]) => {
-            if (v === undefined || v === null) return
-            if (Array.isArray(v)) qs.set(k, v.join(','))
-            else qs.set(k, String(v))
-        })
-        const url = `${BASE}/api/products${qs.toString() ? `?${qs.toString()}` : ''}`
-        logDebug('[api.getProducts] fetching', { url })
-        const res = await fetch(url)
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) {
-            const msg = data.message || `GET /api/products failed: ${res.status}`
-            throw new Error(msg)
-        }
-        // If your backend returns { products: [...] } or { ok, products }, handle both
-        const products = data.products ?? data
-        logDebug('[api.getProducts] got', { count: Array.isArray(products) ? products.length : 'unknown' })
-        return products
+        logDebug('[API.products] request', { url: BASE + path, method: options.method })
+        const res = await fetch(BASE + path, options)
+        const text = await res.text().catch(() => '')
+        const data = text ? JSON.parse(text) : {}
+        if (!res.ok) throw new Error(data.message || `Request failed: ${res.status}`)
+        return data
     } catch (err) {
-        logError('[api.getProducts] error', { error: err?.message })
+        logError('[API.products] request error', { path, error: err?.message })
         throw err
     }
 }
 
-/**
- * POST /api/products
- * Creates a product (used by Seller panel). token optional if endpoint requires auth.
- */
-export async function createProduct(payload, token) {
+/* Public: obtener productos (todo) */
+export async function getProducts() {
+    return request('/api/products', { method: 'GET' })
+}
+
+/* Obtener productos del seller actual:
+   - se asume endpoint /api/products/mine (proteger con token) o fallback a query sellerId
+*/
+export async function getSellerProducts(token, sellerId) {
+    const headers = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    // preferimos endpoint protegido
     try {
-        const res = await fetch(`${BASE}/api/products`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                ...(token ? { Authorization: `Bearer ${token}` } : {})
-            },
-            body: JSON.stringify(payload)
-        })
-        const data = await res.json().catch(() => ({}))
-        if (!res.ok) throw new Error(data.message || `POST /api/products failed: ${res.status}`)
-        logDebug('[api.createProduct] success', data)
-        return data
+        return await request('/api/products/mine', { method: 'GET', headers })
     } catch (err) {
-        logError('[api.createProduct] error', { error: err?.message })
+        // fallback: intentar query por sellerId
+        if (sellerId) {
+            return request(`/api/products?sellerId=${encodeURIComponent(sellerId)}`, { method: 'GET' })
+        }
         throw err
     }
+}
+
+/* Crear producto (ya existente en tu proyecto) */
+export async function createProduct(payload, token) {
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    return request('/api/products', {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(payload)
+    })
+}
+
+/* Actualizar producto */
+export async function updateProduct(productId, payload, token) {
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    return request(`/api/products/${encodeURIComponent(productId)}`, {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify(payload)
+    })
+}
+
+/* Eliminar producto */
+export async function deleteProduct(productId, token) {
+    const headers = {}
+    if (token) headers['Authorization'] = `Bearer ${token}`
+    return request(`/api/products/${encodeURIComponent(productId)}`, {
+        method: 'DELETE',
+        headers
+    })
 }

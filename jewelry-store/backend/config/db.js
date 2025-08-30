@@ -2,8 +2,9 @@
 const mongoose = require('mongoose')
 
 /**
- * connectDB - conecta a MongoDB Atlas usando MONGODB_URI en .env
- * Usa la opción dbName si está presente en env (por ejemplo 'jewelry')
+ * connectDB - conecta a MongoDB usando MONGODB_URI en .env
+ * - Si defines MONGODB_DB en .env, se forzará ese dbName (útil para forzar "jewelry")
+ * - No se pasan opciones deprecadas como useNewUrlParser/useUnifiedTopology
  */
 module.exports = async function connectDB() {
     try {
@@ -12,6 +13,7 @@ module.exports = async function connectDB() {
 
         const dbName = process.env.MONGODB_DB || undefined
 
+        // imprimir URI parcialmente redacted para debug (no exponer credenciales)
         try {
             const redacted = uri.replace(/\/\/(.*)@/, '//<redacted>@')
             console.log(`[db] attempting connection to: ${redacted}${dbName ? ` (dbName=${dbName})` : ''}`)
@@ -19,17 +21,18 @@ module.exports = async function connectDB() {
             console.log('[db] attempting connection (uri hidden)')
         }
 
-        // conecta; dbName es la forma segura de forzar la DB al usar una URI genérica
+        // Opciones: si se definió dbName lo añadimos a opts
         const opts = {}
         if (dbName) opts.dbName = dbName
 
+        // conectar; mongoose usará sus opciones por defecto modernas
         await mongoose.connect(uri, opts)
 
-        // imprime la bd activa
         const active = mongoose.connection?.db?.databaseName || dbName || 'unknown'
         console.log(`[db] Connected to MongoDB — database: ${active}`)
     } catch (err) {
         console.error('[db] Connection error', err)
+        // relanzamos para que index.js no arranque el servidor
         throw err
     }
 }
