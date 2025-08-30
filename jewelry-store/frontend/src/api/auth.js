@@ -1,5 +1,5 @@
 // frontend/src/api/auth.js
-const BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000'
+const BASE = import.meta.env.VITE_API_BASE || 'https://jewelry-store-back-end.vercel.app/'
 
 class ApiError extends Error {
     constructor(message, status = 500, details = null) {

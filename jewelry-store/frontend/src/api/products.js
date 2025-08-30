@@ -1,6 +1,6 @@
 // frontend/src/api/products.js
 import { logDebug, logError } from '../utils/logger'
-const BASE = import.meta.env.VITE_API_BASE || 'http://localhost:5000'
+const BASE = import.meta.env.VITE_API_BASE || 'https://jewelry-store-back-end.vercel.app/'
 
 async function request(path, options = {}) {
     try {
