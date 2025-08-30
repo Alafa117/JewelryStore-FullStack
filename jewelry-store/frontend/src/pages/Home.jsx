@@ -1,5 +1,6 @@
 // src/pages/Home.jsx
 import React from 'react'
+import { Link } from 'react-router-dom'  // <-- usar Link para navegación SPA
 import '../styles/pages/home.css'
 
 export default function Home() {
@@ -12,8 +13,8 @@ export default function Home() {
                 </div>
 
                 <div className="hero-cta">
-                    {/* Mantengo CTA principal (puede navegar a colecciones) */}
-                    <a href="#collections" className="btn">Ver colecciones</a>
+                    {/* Usamos Link a /colecciones en lugar de anchor #collections */}
+                    <Link to="/colecciones" className="btn">Ver colecciones</Link>
                 </div>
             </header>
 

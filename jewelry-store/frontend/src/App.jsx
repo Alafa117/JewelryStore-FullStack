@@ -9,7 +9,7 @@ import SignUp from './pages/SignUp.jsx'
 import Anillos from './pages/Anillos.jsx'
 import Collares from './pages/Collares.jsx'
 import Pendientes from './pages/Pendientes.jsx'
-import Colecciones from './pages/Colecciones.jsx'
+import Colecciones from './pages/Colecciones.jsx' // <-- importa la página de colecciones
 import Seller from './pages/Seller.jsx'
 
 import RoleProtected from './components/RoleProtected.jsx'
@@ -23,7 +23,7 @@ export default function App() {
       <main className="app-container">
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/colecciones" element={<Colecciones />} />
+          <Route path="/colecciones" element={<Colecciones />} /> {/* <-- ruta añadida */}
           <Route path="/anillos" element={<Anillos />} />
           <Route path="/collares" element={<Collares />} />
           <Route path="/pendientes" element={<Pendientes />} />
