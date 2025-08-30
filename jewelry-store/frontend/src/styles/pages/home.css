@@ -1,4 +1,21 @@
-/* home.css */
+/* src/styles/pages/home.css
+   Estilos completos para la página Home
+   Tema: blanco (fondo), texto negro, acentos plata.
+   Incluye soporte para tarjetas VISUALES (.visual-card / .card.visual-card)
+*/
+
+/* Variables fallback (usar las de base.css si existen) */
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --ink: #0b0b0b;
+    --muted: #6b6b6b;
+    --silver: #bfbfbf;
+    --accent: var(--silver);
+    --radius: 12px;
+}
+
+/* Contenedor general */
 .home {
     max-width: 1100px;
     margin: 28px auto;
@@ -6,15 +23,17 @@
     color: var(--ink);
 }
 
+/* Hero principal */
 .hero {
     display: flex;
     justify-content: space-between;
     gap: 20px;
     align-items: center;
     padding: 28px;
-    background: linear-gradient(180deg, rgba(0, 0, 0, 0.02), transparent);
+    background: linear-gradient(180deg, rgba(191, 191, 191, 0.04), transparent);
     border-radius: 14px;
     border: 1px solid rgba(11, 11, 11, 0.04);
+    box-shadow: 0 8px 24px rgba(11, 11, 11, 0.02);
 }
 
 .hero-title {
@@ -22,14 +41,18 @@
     margin: 0 0 8px 0;
     color: var(--ink);
     letter-spacing: 0.3px;
+    line-height: 1.05;
 }
 
 .hero-sub {
     margin: 0;
     color: var(--muted);
+    font-size: 1rem;
 }
 
+/* CTA en el hero */
 .hero-cta .btn {
+    display: inline-block;
     background: linear-gradient(90deg, var(--silver), rgba(191, 191, 191, 0.9));
     color: #07100a;
     padding: 10px 14px;
@@ -37,36 +60,152 @@
     font-weight: 700;
     text-decoration: none;
     box-shadow: 0 10px 30px rgba(11, 11, 11, 0.04);
+    border: 1px solid rgba(11, 11, 11, 0.04);
 }
 
-.grid {
+/* Grid de tarjetas — si usas tarjetas visuales pon .grid.visual-cards */
+.grid,
+.grid.visual-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 18px;
     margin-top: 18px;
 }
 
+/* Tarjeta base (cuando se use tarjeta normal interactiva) */
 .card {
     padding: 18px;
     border-radius: 12px;
     background: linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.98));
     border: 1px solid rgba(11, 11, 11, 0.04);
     transition: transform .12s ease, box-shadow .12s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    justify-content: flex-start;
+    min-height: 140px;
+    cursor: pointer;
 }
 
 .card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.06);
+    box-shadow: 0 18px 40px rgba(11, 11, 11, 0.06);
+}
+
+/* Tarjeta VISUAL (no interactiva) — aplica cuando la tarjeta es solo decorativa */
+.card.visual-card,
+.visual-card {
+    /* hacer solo visual: sin interacción */
+    cursor: default !important;
+    user-select: none !important;
+    pointer-events: none !important;
+    transition: none !important;
+    /* apariencia limpia */
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.99), rgba(255, 255, 255, 0.99));
+    border: 1px solid rgba(11, 11, 11, 0.03);
+    box-shadow: 0 6px 18px rgba(11, 11, 11, 0.03);
+}
+
+/* Si usas .card.visual-card pero quieres que el contenido interno siga siendo estilable,
+   usa .card.visual-card .card-body { pointer-events: none } etc. */
+.card.visual-card .card-body,
+.visual-card .card-body {
+    pointer-events: none;
+}
+
+/* Media / imagen decorativa dentro de la tarjeta visual */
+.card-media {
+    width: 100%;
+    height: 120px;
+    border-radius: 8px;
+    background-image: linear-gradient(135deg, rgba(191, 191, 191, 0.12), rgba(191, 191, 191, 0.04));
+    background-size: cover;
+    background-position: center;
+    border: 1px solid rgba(11, 11, 11, 0.03);
+}
+
+/* Estructura del contenido */
+.card-body {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
 
 .card-title {
     font-weight: 700;
     margin-bottom: 6px;
-    color: var(--silver)
+    color: var(--silver);
+    font-size: 1.05rem;
 }
 
 .card-desc {
     color: var(--muted);
     font-size: 0.95rem;
-    margin-top: 6px;
 }
+
+/* Variantes: cuando la tarjeta es interactiva (sin la clase visual-card) */
+.card .card-title {
+    color: var(--ink);
+}
+
+.card .card-desc {
+    color: var(--muted);
+}
+
+/* Pequeños ajustes de accesibilidad/legibilidad */
+.card-title,
+.card-desc {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Responsive */
+@media (max-width: 980px) {
+    .hero {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 16px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    }
+
+    .card-media {
+        height: 100px;
+    }
+}
+
+@media (max-width: 640px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card-media {
+        height: 90px;
+    }
+
+    .hero-cta .btn {
+        padding: 10px 12px;
+    }
+}
+
+/* Optional: placeholder image style if no image provided */
+.card-media.placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-weight: 600;
+    letter-spacing: 0.3px;
+}
+
+/* Small polish for print/resize */
+.card,
+.card-media {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* End of home.css */
